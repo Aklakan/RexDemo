@@ -51,14 +51,17 @@
     <script src="bower_components/selectize/dist/js/selectize.js"></script>
     <script src="bower_components/moment/moment.js"></script>
     <script src="bower_components/jassa-ui-angular-edit/jassa-ui-angular-edit-tpls.js"></script>
+    <script src="bower_components/underscore/underscore.js"></script>
+    <script src="bower_components/jassa-ui-angular-openlayers/jassa-ui-angular-openlayers-tpls.js"></script>
     <script src="bower_components/codemirror/lib/codemirror.js"></script>
     <script src="bower_components/angular-ui-codemirror/ui-codemirror.js"></script>
     <!-- endbower -->
 
     <!-- endbuild -->
 
-    <script src="lib/turtle-codemirror-mode/turtle-codemirror-mode.js"></script>
 
+    <script src="lib/turtle-codemirror-mode/turtle-codemirror-mode.js"></script>
+    <script src="bower_components/openlayers/lib/OpenLayers.js"></script>
 
     <script type="text/javascript">
     /**
@@ -156,7 +159,15 @@
         </li>
       </ul>
 
+<!--
       <hr />
+
+      <h3>Geo Data Example </h3>
+      <div rex-predicate="'rdfs:geometry'" rex-object="0" rex-value="geom">
+          <geometry-input ng-model="geom" />
+      </div>
+      <hr />
+-->
 
 Added:
 		<div
@@ -173,6 +184,8 @@ Removed:
 		></div>
 
     </div>
+
+
 <!--        {{rexSubject}} {{rexPredicate}} {{rexContext.graph}} -->
 
 </body>
