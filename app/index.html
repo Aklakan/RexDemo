@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html ng-app="RexDemo">
+
+<head>
+    <meta charset="UTF-8">
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
+
+    <title>Demo</title>
+
+    <style>
+    .CodeMirror {
+        border: 1px solid #eee;
+        height: auto;
+    }
+    </style>
+
+    <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
+
+    <!-- build:css(.tmp) styles/main.css -->
+
+    <!-- bower:css -->
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="bower_components/jassa-ui-angular/jassa-ui-angular.css" />
+    <link rel="stylesheet" href="bower_components/angular-ui-select/dist/select.css" />
+    <link rel="stylesheet" href="bower_components/selectize/dist/css/selectize.css" />
+    <link rel="stylesheet" href="bower_components/jassa-ui-angular-edit/jassa-ui-angular-edit.css" />
+    <link rel="stylesheet" href="bower_components/codemirror/lib/codemirror.css" />
+    <!-- endbower -->
+
+    <!-- endbuild -->
+
+
+    <!-- build:js scripts/scripts.js -->
+
+    <!-- bower:js -->
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/bluebird/js/browser/bluebird.js"></script>
+    <script src="bower_components/jassa/jassa.js"></script>
+    <script src="bower_components/angular/angular.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="bower_components/angular-ui-bootstrap-bower/ui-bootstrap-tpls.js"></script>
+    <script src="bower_components/angular-sanitize/angular-sanitize.js"></script>
+    <script src="bower_components/jquery-ui/ui/jquery-ui.js"></script>
+    <script src="bower_components/angular-ui-sortable/sortable.js"></script>
+    <script src="bower_components/angular-ui-utils/ui-utils.js"></script>
+    <script src="bower_components/dddi-angular/dddi-angular.js"></script>
+    <script src="bower_components/jassa-ui-angular/jassa-ui-angular-tpls.js"></script>
+    <script src="bower_components/angular-ui-select/dist/select.js"></script>
+    <script src="bower_components/sifter/sifter.js"></script>
+    <script src="bower_components/microplugin/src/microplugin.js"></script>
+    <script src="bower_components/selectize/dist/js/selectize.js"></script>
+    <script src="bower_components/moment/moment.js"></script>
+    <script src="bower_components/jassa-ui-angular-edit/jassa-ui-angular-edit-tpls.js"></script>
+    <script src="bower_components/codemirror/lib/codemirror.js"></script>
+    <script src="bower_components/angular-ui-codemirror/ui-codemirror.js"></script>
+    <!-- endbower -->
+
+    <!-- endbuild -->
+
+    <script src="lib/turtle-codemirror-mode/turtle-codemirror-mode.js"></script>
+
+
+    <script type="text/javascript">
+    /**
+     * Jassa Setup
+     */
+
+    Class = Jassa.ext.Class;
+
+    jassa = new Jassa(Promise, function() {
+        var jqXHR = $.ajax.apply(this, arguments);
+
+        var ajaxSpec = arguments[0];
+        if(ajaxSpec && ajaxSpec.headers) {
+            var delegate = ajaxSpec.beforeSend;
+            ajaxSpec.beforeSend = function(xhr) {
+
+                _(ajaxSpec.headers).forEach(function(v, k) {
+                    xhr.setRequestHeader(k, v);
+                });
+
+                // Call any prior beforeSend method
+                if(delegate) {
+                    delegate(xhr);
+                }
+            };
+        }
+
+        var r = Promise.resolve(jqXHR)
+            .cancellable()
+            .catch(Promise.TimeoutError, Promise.CancellationError, function(e) {
+                //console.log('CANCELLED REQUEST');
+                jqXHR.abort();
+                throw e;
+            });
+        return r;
+    });
+	</script>
+
+    <script type="text/javascript">
+    /**
+     * Angular Setup
+     */
+    angular
+    .module('RexDemo', ['ui.jassa.edit', 'ui.codemirror'])
+    .controller('AppCtrl', ['$scope', function($scope) {
+		/**
+		 * Code Mirror Setup
+		 */
+		$scope.editorOptions = {
+		    ttl: {
+		        lineWrapping : true,
+		        lineNumbers: true,
+		        tabMode: 'indent',
+		        matchBrackets: true,
+		        mode: 'text/turtle',
+		        readOnly: true
+		    }
+		};
+
+        /**
+         * REX Setup
+         */
+        $scope.graphToTurtle = function(graph, prefixMapping) {
+            var talis = graph ? jassa.io.TalisRdfJsonUtils.triplesToTalisRdfJson(graph) : null;
+            var r = talis ? jassa.io.TalisRdfJsonUtils.talisRdfJsonToTurtle(talis, prefixMapping) : '';
+            return r;
+        }
+
+        $scope.sparqlService= jassa.service.SparqlServiceBuilder
+			.http('http://dbpedia.org/sparql', ['http://dbpedia.org']).create();
+
+    }]);
+    </script>
+
+</head>
+
+<body ng-controller="AppCtrl">
+
+	<div
+        rex-context
+        rex-prefix="'dbp: http://dbpedia.org/resource/ rdfs: http://www.w3.org/2000/01/rdf-schema#'"
+        rex-sparql-service="sparqlService"
+        rex-lookup="true"
+        rex-subject="'dbp:Leipzig'"
+        rex-predicate="'rdfs:label'"
+    >
+
+      <input type="text" ng-model="myModel" rex-object="0" rex-value="myModel" />
+
+      <hr />
+
+      <ul>
+        <li ng-repeat="obj in rexContext.json[rexSubject][rexPredicate]" ng-init="term={}" rex-object="$index" rex-value="term.value" rex-lang="term.lang" rex-termtype="term.type" rex-datatype="term.datatype">
+          <input type="text" ng-model="term.value" />
+        </li>
+      </ul>
+
+      <hr />
+
+Added:
+		<div
+		    ui-codemirror="editorOptions.ttl"
+		    ng-model="added"
+		    sync-template="{{graphToTurtle(rexContext.diff.added, rexPrefixMapping)}}"
+		></div>
+
+Removed:
+		<div
+		    ui-codemirror="editorOptions.ttl"
+		    ng-model="removed"
+		    sync-template="{{graphToTurtle(rexContext.diff.removed, rexPrefixMapping)}}"
+		></div>
+
+    </div>
+<!--        {{rexSubject}} {{rexPredicate}} {{rexContext.graph}} -->
+
+</body>
+
+</html>
+
